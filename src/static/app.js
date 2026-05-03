@@ -25,9 +25,44 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <div class="participants">
+            <strong>Participants:</strong>
+            ${details.participants.length > 0
+              ? `<ul class="participants-list">${details.participants
+                  .map((participant) => `<li>${participant} <button class="delete-btn" data-activity="${name}" data-email="${participant}">×</button></li>`)
+                  .join("")}</ul>`
+              : `<p class="no-participants">No participants yet.</p>`}
+          </div>
         `;
 
         activitiesList.appendChild(activityCard);
+
+        // Add event listeners for delete buttons
+        const deleteButtons = activityCard.querySelectorAll('.delete-btn');
+        deleteButtons.forEach(button => {
+          button.addEventListener('click', async (event) => {
+            const activity = event.target.dataset.activity;
+            const email = event.target.dataset.email;
+            try {
+              const response = await fetch(
+                `/activities/${encodeURIComponent(activity)}/unregister?email=${encodeURIComponent(email)}`,
+                {
+                  method: "DELETE",
+                }
+              );
+              const result = await response.json();
+              if (response.ok) {
+                // Refresh activities
+                fetchActivities();
+              } else {
+                alert(result.detail || "An error occurred");
+              }
+            } catch (error) {
+              alert("Failed to unregister. Please try again.");
+              console.error("Error unregistering:", error);
+            }
+          });
+        });
 
         // Add option to select dropdown
         const option = document.createElement("option");
